@@ -1,10 +1,7 @@
-[package]
-name = "openai-rust"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["openai-rust", "examples/*"]
+default-members = ["openai-rust"]
+resolver = "2"
 
-[dependencies]
-tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.12", features = ["json"] }
-thiserror = "2"
-dotenvy = "0.15.7"
+[workspace.package]
+rust-version = "1.85"
