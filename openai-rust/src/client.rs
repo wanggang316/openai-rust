@@ -4,8 +4,6 @@ use futures_util::{Stream, StreamExt};
 use reqwest::Client as ReqwestClient;
 use thiserror::Error;
 
-const API_BASE: &str = "https://openrouter.ai/api/v1";
-
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("HTTP request failed: {0}")]
@@ -23,13 +21,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Clone)]
 pub struct Client {
     api_key: String,
+    base_url: String,
     http_client: ReqwestClient,
 }
 
 impl Client {
-    pub fn new(api_key: String) -> Self {
+    pub fn new(api_key: String, base_url: String) -> Self {
         Self {
             api_key,
+            base_url,
             http_client: ReqwestClient::new(),
         }
     }
@@ -38,7 +38,7 @@ impl Client {
         &self,
         request: &ChatCompletionRequest,
     ) -> Result<ChatCompletionResponse> {
-        let url = format!("{API_BASE}/chat/completions");
+        let url = format!("{}/chat/completions", self.base_url);
         let response = self
             .http_client
             .post(&url)
@@ -64,7 +64,7 @@ impl Client {
         &self,
         request: &ChatCompletionRequest,
     ) -> Result<impl Stream<Item = Result<ChatCompletionChunkResponse>>> {
-        let url = format!("{API_BASE}/chat/completions");
+        let url = format!("{}/chat/completions", self.base_url);
 
         let response = self
             .http_client
