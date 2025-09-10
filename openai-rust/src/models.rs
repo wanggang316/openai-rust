@@ -1,3 +1,5 @@
+use core::str;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -20,6 +22,9 @@ pub struct ChatCompletionRequest {
     pub messages: Vec<ChatMessage>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
+    /// 如果设置，API 将以流式方式发送部分消息增量。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -50,4 +55,26 @@ pub struct ChatCompletionResponse {
     pub model: String,
     pub choices: Vec<Choice>,
     pub usage: Usage,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ChatCompletionChunkResponse {
+    pub id: String,
+    pub object: String,
+    pub created: u64,
+    pub model: String,
+    pub choices: Vec<ChunkChoice>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ChunkChoice {
+    pub index: u32,
+    pub delta: Delta,
+    pub finish_reason: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Delta {
+    pub role: Option<Role>,
+    pub content: Option<String>,
 }

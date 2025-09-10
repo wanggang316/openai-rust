@@ -25,6 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         model: "z-ai/glm-4.5-air:free".to_string(),
         messages,
         temperature: Some(0.7),
+        stream: None,
     };
 
     println!("正在发送请求....");
