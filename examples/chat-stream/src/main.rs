@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     let request = ChatCompletionRequest {
-        model: "openai/gpt-5-chat".to_string(),
+        model: "deepseek/deepseek-r1-0528:free".to_string(),
         messages,
         temperature: Some(0.7),
         stream: Some(true),
@@ -36,17 +36,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stream = client.chat_completions_stream(&request).await?;
     pin_mut!(stream);
 
-    // 使用 `while let` 循环来处理流中的每一个项目
     while let Some(chunk_result) = stream.next().await {
         match chunk_result {
             Ok(chunk) => {
                 // 从数据块中获取第一个选择的增量内容
                 if let Some(choice) = chunk.choices.first() {
+                    if let Some(reasoning) = &choice.delta.reasoning {
+                        print!("{reasoning}");
+                        io::stdout().flush()?;
+                    }
+
                     if let Some(content) = &choice.delta.content {
                         // 打印内容并立即刷新标准输出，以实现打字机效果
                         print!("{content}");
                         io::stdout().flush()?;
                     }
+
+                    // 收集推理过程
                 }
             }
             Err(e) => {

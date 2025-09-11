@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     let request = ChatCompletionRequest {
-        model: "z-ai/glm-4.5-air:free".to_string(),
+        model: "deepseek-reasoner".to_string(),
         messages,
         temperature: Some(0.7),
         stream: None,
@@ -34,8 +34,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match client.chat_completion(&request).await {
         Ok(response) => {
             if let Some(choice) = response.choices.first() {
+                // 显示推理过程（如果存在）
+                if let Some(reasoning) = &choice.message.reasoning {
+                    println!("\n--- 推理过程 ---");
+                    println!("{reasoning}");
+                }
+
                 println!("\n--- AI 回复 ---");
                 println!("{}", choice.message.content);
+
                 println!("---------------------\n");
             } else {
                 println!("No choices returned in the response.");

@@ -31,6 +31,8 @@ pub struct ChatCompletionRequest {
 pub struct ResponseMessage {
     pub role: Role,
     pub content: String,
+    #[serde(alias = "reasoning_content")]
+    pub reasoning: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -77,4 +79,6 @@ pub struct ChunkChoice {
 pub struct Delta {
     pub role: Option<Role>,
     pub content: Option<String>,
+    #[serde(alias = "reasoning_content")]
+    pub reasoning: Option<String>,
 }
