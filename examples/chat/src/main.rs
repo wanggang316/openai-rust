@@ -1,5 +1,5 @@
 use openai_rust::client::Client;
-use openai_rust::models::{ChatCompletionRequest, ChatMessage, Role};
+use openai_rust::types::{ChatCompletionRequest, ChatMessage, Role};
 use std::env;
 
 #[tokio::main]
@@ -7,9 +7,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().expect("Failed to load .env file");
 
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set in .env file");
-    let base_url =
-        env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
-    let client = Client::new(api_key, base_url);
+    let base_url = env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
+    
+    // 使用新的 builder 模式或直接创建
+    let client = Client::builder()
+        .api_key(api_key)
+        .base_url(base_url)
+        .build()?;
 
     let messages = vec![
         ChatMessage {
@@ -31,7 +35,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("正在发送请求....");
 
-    match client.chat_completion(&request).await {
+    // 使用新的链式调用 API
+    match client.completions().create(&request).await {
         Ok(response) => {
             if let Some(choice) = response.choices.first() {
                 // 显示推理过程（如果存在）

@@ -1,6 +1,6 @@
 use futures_util::{StreamExt, pin_mut};
 use openai_rust::client::Client;
-use openai_rust::models::{ChatCompletionRequest, ChatMessage, Role};
+use openai_rust::types::{ChatCompletionRequest, ChatMessage, Role};
 use std::env;
 use std::io::{self, Write};
 
@@ -9,9 +9,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().expect("Failed to load .env file");
 
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set in .env file");
-    let base_url =
-        env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
-    let client = Client::new(api_key, base_url);
+    let base_url = env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
+    
+    // 使用新的 builder 模式
+    let client = Client::builder()
+        .api_key(api_key)
+        .base_url(base_url)
+        .build()?;
 
     let messages = vec![
         ChatMessage {
@@ -33,7 +37,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("正在发送流式请求....");
 
-    let stream = client.chat_completions_stream(&request).await?;
+    // 使用新的链式调用 API - 修复生命周期问题
+    let completions = client.completions();
+    let stream = completions.create_stream(&request).await?;
     pin_mut!(stream);
 
     while let Some(chunk_result) = stream.next().await {
@@ -51,8 +57,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         print!("{content}");
                         io::stdout().flush()?;
                     }
-
-                    // 收集推理过程
                 }
             }
             Err(e) => {

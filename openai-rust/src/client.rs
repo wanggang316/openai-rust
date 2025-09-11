@@ -1,8 +1,10 @@
-use crate::models::{ChatCompletionChunkResponse, ChatCompletionRequest, ChatCompletionResponse};
-use async_stream::stream;
-use futures_util::{Stream, StreamExt};
+use crate::completion::Completion;
+use crate::model::Model;
+use crate::response::Response;
 use reqwest::Client as ReqwestClient;
 use thiserror::Error;
+
+const API_BASE: &str = "https://api.openai.com/v1";
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -25,6 +27,46 @@ pub struct Client {
     http_client: ReqwestClient,
 }
 
+#[derive(Debug, Default)]
+pub struct ClientBuilder {
+    api_key: Option<String>,
+    base_url: Option<String>,
+    http_client: Option<ReqwestClient>,
+}
+
+impl ClientBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn api_key<S: Into<String>>(mut self, api_key: S) -> Self {
+        self.api_key = Some(api_key.into());
+        self
+    }
+
+    pub fn base_url<S: Into<String>>(mut self, base_url: S) -> Self {
+        self.base_url = Some(base_url.into());
+        self
+    }
+
+    pub fn http_client(mut self, http_client: ReqwestClient) -> Self {
+        self.http_client = Some(http_client);
+        self
+    }
+
+    pub fn build(self) -> std::result::Result<Client, String> {
+        let api_key = self.api_key.ok_or("API key is required")?;
+        let base_url = self.base_url.unwrap_or_else(|| API_BASE.to_string());
+        let http_client = self.http_client.unwrap_or_else(|| ReqwestClient::new());
+
+        Ok(Client {
+            api_key,
+            base_url,
+            http_client,
+        })
+    }
+}
+
 impl Client {
     pub fn new(api_key: String, base_url: String) -> Self {
         Self {
@@ -34,87 +76,33 @@ impl Client {
         }
     }
 
-    pub async fn chat_completion(
-        &self,
-        request: &ChatCompletionRequest,
-    ) -> Result<ChatCompletionResponse> {
-        let url = format!("{}/chat/completions", self.base_url);
-        let response = self
-            .http_client
-            .post(&url)
-            .bearer_auth(&self.api_key)
-            .json(&request)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            let error_text = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Failed to read error body".to_string());
-            return Err(Error::ApiError(format!("API request failed: {error_text}")));
-        }
-
-        let chat_response = response.json::<ChatCompletionResponse>().await?;
-        Ok(chat_response)
+    pub fn builder() -> ClientBuilder {
+        ClientBuilder::new()
     }
 
-    /// 发送一个流式的聊天补全请求。
-    pub async fn chat_completions_stream(
-        &self,
-        request: &ChatCompletionRequest,
-    ) -> Result<impl Stream<Item = Result<ChatCompletionChunkResponse>>> {
-        let url = format!("{}/chat/completions", self.base_url);
+    // Getter methods for managers to access private fields
+    pub(crate) fn api_key(&self) -> &str {
+        &self.api_key
+    }
 
-        let response = self
-            .http_client
-            .post(&url)
-            .bearer_auth(&self.api_key)
-            .json(request)
-            .send()
-            .await?;
+    pub(crate) fn base_url(&self) -> &str {
+        &self.base_url
+    }
 
-        if !response.status().is_success() {
-            let error_body = response
-                .text()
-                .await
-                .unwrap_or_else(|_| "Failed to read error body".to_string());
-            return Err(Error::ApiError(format!("API request failed: {error_body}")));
-        }
+    pub(crate) fn http_client(&self) -> &ReqwestClient {
+        &self.http_client
+    }
 
-        let mut byte_stream = response.bytes_stream();
+    // Manager accessor methods
+    pub fn completions(&self) -> Completion {
+        Completion::new(self)
+    }
 
-        // 使用 async-stream 宏来创建一个实现了 Stream trait 的异步代码块
-        let s = stream! {
-            let mut buffer = String::new();
-            while let Some(chunk_result) = byte_stream.next().await {
-                let chunk = match chunk_result {
-                    Ok(bytes) => bytes,
-                    Err(e) => {
-                        yield Err(Error::from(e));
-                        break;
-                    }
-                };
+    pub fn models(&self) -> Model {
+        Model::new(self)
+    }
 
-                buffer.push_str(&String::from_utf8_lossy(&chunk));
-
-                // 通过换行符分割来处理 Server-Sent Events (SSE)
-                while let Some(newline_pos) = buffer.find('\n') {
-                    let line: String = buffer.drain(..=newline_pos).collect();
-                    if line.trim().starts_with("data: ") {
-                        let data = &line.trim()[6..];
-                        if data == "[DONE]" {
-                            break; // 流结束
-                        }
-                        match serde_json::from_str::<ChatCompletionChunkResponse>(data) {
-                            Ok(chunk_response) => yield Ok(chunk_response),
-                            Err(e) => yield Err(Error::from(e)),
-                        }
-                    }
-                }
-            }
-        };
-
-        Ok(s)
+    pub fn responses(&self) -> Response {
+        Response::new(self)
     }
 }

@@ -1,0 +1,9 @@
+[package]
+name = "models-list-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+openai-rust = { path = "../../openai-rust" }
+tokio = { version = "1", features = ["full"] }
+dotenvy = "0.15"
