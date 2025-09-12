@@ -12,10 +12,7 @@ impl<'a> Completion<'a> {
         Self { client }
     }
 
-    pub async fn create(
-        &self,
-        request: &ChatCompletionRequest,
-    ) -> Result<ChatCompletionResponse> {
+    pub async fn create(&self, request: &ChatCompletionRequest) -> Result<ChatCompletionResponse> {
         let url = format!("{}/chat/completions", self.client.base_url());
         let response = self
             .client
