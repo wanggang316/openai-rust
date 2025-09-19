@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         ChatMessage {
             role: Role::User,
-            content: "人生的意义是什么?".to_string(),
+            content: "今天星期几？".to_string(),
         },
     ];
 
