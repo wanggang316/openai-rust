@@ -1,9 +1,0 @@
-[package]
-name = "chat"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-openai-rust = { path = "../../openai-rust" }
-tokio = { version = "1", features = ["full"] }
-dotenvy = "0.15.7"

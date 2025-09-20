@@ -18,12 +18,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Simple text input - just pass a string
     let request = CreateResponseRequest {
-        model: "gpt-4o-mini".to_string(),
-        input: ResponseInput::Text("今天星期几？".to_string()),
+        model: "gpt-5-nano".to_string(),
+        input: ResponseInput::Text("人生的意义是什么？".to_string()),
         instructions: Some("你是一个哲学助手，请深入思考问题。".to_string()),
         metadata: None,
         previous_response_id: None,
         tools: None,
+        stream: Some(false),
     };
 
     println!("正在发送 Response API 请求....");
@@ -48,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Item ID: {}", item.id);
                 println!("类型: {}", item.item_type);
                 if let Some(role) = &item.role {
-                    println!("角色: {}", role);
+                    println!("角色: {role}");
                 }
 
                 // Process content within each item
@@ -56,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if content.content_type == "output_text" {
                         if let Some(text) = &content.text {
                             println!("\n文本内容:");
-                            println!("{}", text);
+                            println!("{text}");
                         }
                     }
                 }

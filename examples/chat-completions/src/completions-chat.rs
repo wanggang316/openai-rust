@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let base_url =
         env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://openrouter.ai/api/v1".to_string());
 
-    // 使用新的 builder 模式或直接创建
+    // 使用新的 builder 模式
     let client = Client::builder()
         .api_key(api_key)
         .base_url(base_url)
@@ -59,6 +59,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    print!("运行结束");
+    println!("运行结束");
     Ok(())
 }

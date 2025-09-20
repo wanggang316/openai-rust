@@ -51,14 +51,20 @@ cargo build
 # Check compilation (faster)
 cargo check
 
-# Run specific example
-cargo run --bin chat
-cargo run --bin chat-stream
-cargo run --bin models-list-example
-cargo run --bin responses-example
+# Run specific examples
+# Chat Completions examples
+cargo run --bin completions-chat
+cargo run --bin completions-streaming
+
+# Models example
+cargo run --bin models-example
+
+# Responses API examples  
+cargo run --bin responses-chat
+cargo run --bin responses-streaming
 
 # Run example from its directory
-cd examples/chat && cargo run
+cd examples/chat-completions && cargo run --bin completions-chat
 ```
 
 ### Workspace Structure

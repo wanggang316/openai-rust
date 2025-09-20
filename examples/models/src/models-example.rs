@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set in .env file");
     let base_url = env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
-    
+
     // 使用新的 builder 模式
     let client = Client::builder()
         .api_key(api_key)

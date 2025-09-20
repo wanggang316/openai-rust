@@ -1,4 +1,4 @@
-use futures_util::{StreamExt, pin_mut};
+use futures::StreamExt;
 use openai_rust::client::Client;
 use openai_rust::types::{ChatCompletionRequest, ChatMessage, Role};
 use std::env;
@@ -38,10 +38,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("正在发送流式请求....");
 
-    // 使用新的链式调用 API - 修复生命周期问题
+    // 使用新的链式调用 API
     let completions = client.completions();
-    let stream = completions.create_stream(&request).await?;
-    pin_mut!(stream);
+    let mut stream = Box::pin(completions.create_stream(&request).await?);
 
     while let Some(chunk_result) = stream.next().await {
         match chunk_result {

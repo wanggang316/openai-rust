@@ -1,7 +1,11 @@
 [package]
-name = "models-list-example"
+name = "models-example"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "models-example"
+path = "src/models-example.rs"
 
 [dependencies]
 openai-rust = { path = "../../openai-rust" }

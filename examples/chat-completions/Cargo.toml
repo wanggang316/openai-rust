@@ -1,18 +1,19 @@
 [package]
-name = "responses-example"
+name = "chat-completions-example"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "responses-chat"
-path = "src/responses-chat.rs"
+name = "completions-chat"
+path = "src/completions-chat.rs"
 
 [[bin]]
-name = "responses-streaming"
-path = "src/responses-streaming.rs"
+name = "completions-streaming"
+path = "src/completions-streaming.rs"
 
 [dependencies]
 openai-rust = { path = "../../openai-rust" }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
+tokio-stream = "0.1"
 futures = "0.3"
