@@ -94,6 +94,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // 流完成，退出循环
                         break;
                     }
+                    ResponseStreamEvent::Error { error } => {
+                        eprintln!("❌ 流事件错误: {} - {}", error.code, error.message);
+                        // 继续处理下一个事件，不退出
+                    }
+                    ResponseStreamEvent::Unknown => {
+                        // 静默处理未知事件类型
+                    }
                 }
             }
             Err(e) => {

@@ -165,8 +165,10 @@ pub type CreateResponseResponse = Response;
 #[derive(Debug, Deserialize, Clone)]
 pub struct ResponseError {
     /// Error code
+    #[serde(default)]
     pub code: String,
     /// Error message
+    #[serde(default)]
     pub message: String,
 }
 
@@ -296,6 +298,10 @@ pub enum ResponseStreamEvent {
         sequence_number: u32,
         response: Response,
     },
+    #[serde(rename = "error")]
+    Error { error: ResponseError },
+    #[serde(other)]
+    Unknown,
 }
 
 #[derive(Debug, Deserialize, Clone)]
