@@ -4,8 +4,9 @@ mod responses;
 
 // Re-export from completions module
 pub use completions::{
-    ChatCompletionChunkResponse, ChatCompletionRequest, ChatCompletionResponse, ChatMessage,
-    Choice, ChunkChoice, Delta, ResponseMessage, Role, Usage,
+    CompletionChunkResponse, CompletionRequest, CompletionResponse, RequestMessage,
+    Choice, ChunkChoice, Delta, DeltaFunction, DeltaToolCall, Function, FunctionCall,
+    ResponseMessage, Role, Tool, ToolCall, ToolChoice, ToolChoiceFunction, Usage,
 };
 
 // Re-export from models module

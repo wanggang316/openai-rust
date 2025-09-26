@@ -1,5 +1,5 @@
 use crate::client::{Client, Error, Result};
-use crate::types::{ChatCompletionChunkResponse, ChatCompletionRequest, ChatCompletionResponse};
+use crate::types::{CompletionChunkResponse, CompletionRequest, CompletionResponse};
 use async_stream::stream;
 use futures_util::{Stream, StreamExt};
 
@@ -12,7 +12,7 @@ impl<'a> Completion<'a> {
         Self { client }
     }
 
-    pub async fn create(&self, request: &ChatCompletionRequest) -> Result<ChatCompletionResponse> {
+    pub async fn create(&self, request: &CompletionRequest) -> Result<CompletionResponse> {
         let url = format!("{}/chat/completions", self.client.base_url());
         let response = self
             .client
@@ -31,14 +31,14 @@ impl<'a> Completion<'a> {
             return Err(Error::ApiError(format!("API request failed: {error_text}")));
         }
 
-        let chat_response = response.json::<ChatCompletionResponse>().await?;
+        let chat_response = response.json::<CompletionResponse>().await?;
         Ok(chat_response)
     }
 
     pub async fn create_stream(
         &self,
-        request: &ChatCompletionRequest,
-    ) -> Result<impl Stream<Item = Result<ChatCompletionChunkResponse>>> {
+        request: &CompletionRequest,
+    ) -> Result<impl Stream<Item = Result<CompletionChunkResponse>>> {
         let url = format!("{}/chat/completions", self.client.base_url());
 
         let response = self
@@ -80,7 +80,7 @@ impl<'a> Completion<'a> {
                         if data == "[DONE]" {
                             break;
                         }
-                        match serde_json::from_str::<ChatCompletionChunkResponse>(data) {
+                        match serde_json::from_str::<CompletionChunkResponse>(data) {
                             Ok(chunk_response) => yield Ok(chunk_response),
                             Err(e) => yield Err(Error::from(e)),
                         }

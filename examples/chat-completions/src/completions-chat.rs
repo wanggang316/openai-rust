@@ -1,5 +1,5 @@
 use openai_rust::client::Client;
-use openai_rust::types::{ChatCompletionRequest, ChatMessage, Role};
+use openai_rust::types::{CompletionRequest, RequestMessage, Role};
 use std::env;
 
 #[tokio::main]
@@ -17,21 +17,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     let messages = vec![
-        ChatMessage {
-            role: Role::System,
-            content: "You are a helpful assistant.".to_string(),
-        },
-        ChatMessage {
-            role: Role::User,
-            content: "今天星期几？".to_string(),
-        },
+        RequestMessage::new(Role::System, "You are a helpful assistant.".to_string()),
+        RequestMessage::new(Role::User, "今天星期几？".to_string()),
     ];
 
-    let request = ChatCompletionRequest {
+    let request = CompletionRequest {
         model: "deepseek-reasoner".to_string(),
         messages,
         temperature: Some(0.7),
         stream: None,
+        tools: None,
+        tool_choice: None,
+        parallel_tool_calls: None,
     };
 
     println!("正在发送请求....");
@@ -47,7 +44,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 println!("\n--- AI 回复 ---");
-                println!("{}", choice.message.content);
+                if let Some(content) = &choice.message.content {
+                    println!("{}", content);
+                }
 
                 println!("---------------------\n");
             } else {
