@@ -1,6 +1,6 @@
 use openai_rust::client::Client;
 use openai_rust::types::{
-    CompletionRequest, RequestMessage, Role, Tool, Function, ToolChoice, ToolCall
+    CompletionRequest, Function, RequestMessage, Role, Tool, ToolCall, ToolChoice,
 };
 use serde_json::{json, Value};
 use std::env;
@@ -10,8 +10,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().expect("Failed to load .env file");
 
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
-    let base_url = env::var("OPENAI_BASE_URL")
-        .unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
+    let base_url =
+        env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
 
     let client = Client::builder()
         .api_key(api_key)
@@ -98,8 +98,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // 添加助手的回复到消息历史
                     let content = assistant_message.content.clone().unwrap_or_default();
-                    messages.push(RequestMessage::assistant_with_tools(content.clone(),
-                        assistant_message.tool_calls.clone().unwrap_or_default()));
+                    messages.push(RequestMessage::assistant_with_tools(
+                        content.clone(),
+                        assistant_message.tool_calls.clone().unwrap_or_default(),
+                    ));
 
                     // 显示助手回复的内容
                     if !content.is_empty() {
@@ -110,13 +112,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if let Some(tool_calls) = &assistant_message.tool_calls {
                         println!("\nTool calls requested:");
                         for tool_call in tool_calls {
-                            println!("  - {}: {}", tool_call.function.name, tool_call.function.arguments);
+                            println!(
+                                "  - {}: {}",
+                                tool_call.function.name, tool_call.function.arguments
+                            );
 
                             // 模拟工具执行
                             let tool_response = execute_tool_call(tool_call).await;
 
                             // 添加工具响应到消息历史
-                            messages.push(RequestMessage::tool_response(tool_response, tool_call.id.clone()));
+                            messages.push(RequestMessage::tool_response(
+                                tool_response,
+                                tool_call.id.clone(),
+                            ));
                         }
                     } else {
                         // 没有工具调用，对话结束
@@ -157,8 +165,14 @@ async fn execute_tool_call(tool_call: &ToolCall) -> String {
         "get_current_weather" => {
             // 解析参数
             let args: Value = serde_json::from_str(arguments).unwrap_or_else(|_| json!({}));
-            let location = args.get("location").and_then(|v| v.as_str()).unwrap_or("Unknown");
-            let unit = args.get("unit").and_then(|v| v.as_str()).unwrap_or("celsius");
+            let location = args
+                .get("location")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown");
+            let unit = args
+                .get("unit")
+                .and_then(|v| v.as_str())
+                .unwrap_or("celsius");
 
             // 模拟天气数据
             let weather_data = json!({
@@ -170,16 +184,19 @@ async fn execute_tool_call(tool_call: &ToolCall) -> String {
             });
 
             format!("Weather in {}: {}", location, weather_data)
-        },
+        }
         "calculate" => {
             // 解析参数
             let args: Value = serde_json::from_str(arguments).unwrap_or_else(|_| json!({}));
-            let expression = args.get("expression").and_then(|v| v.as_str()).unwrap_or("");
+            let expression = args
+                .get("expression")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
 
             // 简单的计算器实现（仅用于演示）
             let result = simple_calculate(expression);
             format!("Calculation result for '{}': {}", expression, result)
-        },
+        }
         _ => {
             format!("Unknown function: {}", function_name)
         }

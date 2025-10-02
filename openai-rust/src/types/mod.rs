@@ -4,9 +4,12 @@ mod responses;
 
 // Re-export from completions module
 pub use completions::{
-    CompletionChunkResponse, CompletionRequest, CompletionResponse, RequestMessage,
-    Choice, ChunkChoice, Delta, DeltaFunction, DeltaToolCall, Function, FunctionCall,
-    ResponseMessage, Role, Tool, ToolCall, ToolChoice, ToolChoiceFunction, Usage,
+    AudioFormat, AudioOptions, Choice, ChunkChoice, CompletionChunkResponse, CompletionRequest,
+    CompletionResponse, Delta, DeltaFunction, DeltaToolCall, Function, FunctionCall,
+    ReasoningEffort, RequestMessage, ResponseMessage, ResponseModality, Role, ServiceTier,
+    StopConfig, StreamOptions, Tool, ToolCall, ToolChoice, ToolChoiceFunction, Usage, Verbosity,
+    WebSearchApproximateLocation, WebSearchContextSize, WebSearchLocationType, WebSearchOptions,
+    WebSearchUserLocation,
 };
 
 // Re-export from models module

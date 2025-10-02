@@ -1,9 +1,9 @@
+use futures::StreamExt;
 use openai_rust::client::Client;
 use openai_rust::types::{
-    CompletionRequest, RequestMessage, Role, Tool, Function, ToolChoice, ToolCall, FunctionCall
+    CompletionRequest, Function, FunctionCall, RequestMessage, Role, Tool, ToolCall, ToolChoice,
 };
 use serde_json::{json, Value};
-use futures::StreamExt;
 use std::env;
 use std::io::{self, Write};
 
@@ -12,8 +12,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenvy::dotenv().ok();
 
     let api_key = env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY not set");
-    let base_url = env::var("OPENAI_BASE_URL")
-        .unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
+    let base_url =
+        env::var("OPENAI_BASE_URL").unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
 
     let client = Client::builder()
         .api_key(api_key)
@@ -85,7 +85,7 @@ fn get_mcp_tools() -> Vec<Tool> {
 async fn process_with_tools(
     client: &Client,
     query: &str,
-    tools: &[Tool]
+    tools: &[Tool],
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut messages = vec![
         RequestMessage::new(
@@ -111,14 +111,21 @@ async fn process_with_tools(
 
     if tool_calls.is_empty() {
         println!("No tool calls needed - returning direct response");
-        return Ok("I apologize, but I need access to real-time data to answer your question accurately.".to_string());
+        return Ok(
+            "I apologize, but I need access to real-time data to answer your question accurately."
+                .to_string(),
+        );
     }
 
     println!("\n=== Step 2: Executing Tool Calls ===");
     // 执行所有工具调用
     for (index, tool_call) in tool_calls.iter().enumerate() {
-        println!("Executing tool {} of {}: {}",
-                index + 1, tool_calls.len(), &tool_call.function_name);
+        println!(
+            "Executing tool {} of {}: {}",
+            index + 1,
+            tool_calls.len(),
+            &tool_call.function_name
+        );
 
         let result = execute_mcp_tool(tool_call).await;
         println!("✓ Result: {}\n", result);
@@ -126,14 +133,11 @@ async fn process_with_tools(
         // 添加工具调用到消息历史
         messages.push(RequestMessage::assistant_with_tools(
             String::new(),
-            vec![tool_call.to_tool_call()]
+            vec![tool_call.to_tool_call()],
         ));
 
         // 添加工具结果到消息历史
-        messages.push(RequestMessage::tool_response(
-            result,
-            tool_call.id.clone()
-        ));
+        messages.push(RequestMessage::tool_response(result, tool_call.id.clone()));
     }
 
     println!("=== Step 3: Follow-up AI Request ===");
@@ -155,7 +159,7 @@ async fn process_with_tools(
 /// 流式处理并获取工具调用
 async fn stream_and_get_tool_calls(
     client: &Client,
-    request: &CompletionRequest
+    request: &CompletionRequest,
 ) -> Result<Vec<CompletedToolCall>, Box<dyn std::error::Error>> {
     let completions = client.completions();
     let mut stream = Box::pin(completions.create_stream(request).await?);
@@ -215,7 +219,7 @@ async fn stream_and_get_tool_calls(
                         break;
                     }
                 }
-            },
+            }
             Err(e) => {
                 eprintln!("Error in stream: {}", e);
                 break;
@@ -246,8 +250,12 @@ async fn stream_and_get_tool_calls(
     if !completed_tool_calls.is_empty() {
         println!("Tool calls collected: {}", completed_tool_calls.len());
         for (index, tool_call) in completed_tool_calls.iter().enumerate() {
-            println!("Tool call {}: {} with args: {}",
-                   index + 1, tool_call.function_name, tool_call.function_arguments);
+            println!(
+                "Tool call {}: {} with args: {}",
+                index + 1,
+                tool_call.function_name,
+                tool_call.function_arguments
+            );
         }
     } else {
         println!("No tool calls needed");
@@ -288,7 +296,7 @@ impl CompletedToolCall {
 /// 流式处理并获取文本内容
 async fn stream_and_get_content(
     client: &Client,
-    request: &CompletionRequest
+    request: &CompletionRequest,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let completions = client.completions();
     let mut stream = Box::pin(completions.create_stream(request).await?);
@@ -310,7 +318,7 @@ async fn stream_and_get_content(
                         break;
                     }
                 }
-            },
+            }
             Err(e) => {
                 eprintln!("Error in stream: {}", e);
                 break;
@@ -342,26 +350,37 @@ async fn execute_mcp_tool(tool_call: &CompletedToolCall) -> String {
     let function_name = &tool_call.function_name;
     let arguments = &tool_call.function_arguments;
 
-    println!("[MCP] Executing tool: {} with args: {}", function_name, arguments);
+    println!(
+        "[MCP] Executing tool: {} with args: {}",
+        function_name, arguments
+    );
 
     match function_name.as_str() {
         "get_current_time" => {
             // 解析参数
             let args: Value = serde_json::from_str(arguments).unwrap_or_else(|_| json!({}));
-            let timezone = args.get("timezone").and_then(|v| v.as_str()).unwrap_or("UTC");
+            let timezone = args
+                .get("timezone")
+                .and_then(|v| v.as_str())
+                .unwrap_or("UTC");
 
             // 模拟时间数据（在实际应用中，你会使用真实的时间库）
             match timezone {
                 "Asia/Tokyo" => "Current time in Tokyo: 2024-01-15 15:30:00 JST".to_string(),
-                "America/New_York" => "Current time in New York: 2024-01-15 01:30:00 EST".to_string(),
+                "America/New_York" => {
+                    "Current time in New York: 2024-01-15 01:30:00 EST".to_string()
+                }
                 "Europe/London" => "Current time in London: 2024-01-15 06:30:00 GMT".to_string(),
                 "UTC" | _ => "Current time in UTC: 2024-01-15 06:30:00 UTC".to_string(),
             }
-        },
+        }
         "get_weather" => {
             // 解析参数
             let args: Value = serde_json::from_str(arguments).unwrap_or_else(|_| json!({}));
-            let location = args.get("location").and_then(|v| v.as_str()).unwrap_or("Unknown location");
+            let location = args
+                .get("location")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Unknown location");
 
             // 模拟天气数据
             let weather_data = json!({
@@ -373,14 +392,16 @@ async fn execute_mcp_tool(tool_call: &CompletedToolCall) -> String {
                 "visibility": "16 km"
             });
 
-            format!("Weather in {}: Temperature {}, {}, Humidity {}, Wind {}, Visibility {}",
-                   location,
-                   weather_data["temperature"],
-                   weather_data["condition"],
-                   weather_data["humidity"],
-                   weather_data["wind"],
-                   weather_data["visibility"])
-        },
+            format!(
+                "Weather in {}: Temperature {}, {}, Humidity {}, Wind {}, Visibility {}",
+                location,
+                weather_data["temperature"],
+                weather_data["condition"],
+                weather_data["humidity"],
+                weather_data["wind"],
+                weather_data["visibility"]
+            )
+        }
         _ => {
             format!("[ERROR] Unknown MCP function: {}", function_name)
         }
