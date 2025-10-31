@@ -1,6 +1,6 @@
 use futures::StreamExt;
 use openai_rust::client::Client;
-use openai_rust::types::{CreateResponseRequest, ResponseInput, ResponseStreamEvent};
+use openai_rust::types::{CreateResponseRequest, ResponseStreamEvent};
 use std::env;
 use std::io::{self, Write};
 
@@ -17,15 +17,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .base_url(base_url)
         .build()?;
 
-    let request = CreateResponseRequest {
-        model: "gpt-5-nano".to_string(),
-        input: ResponseInput::Text("人为什么而活".to_string()),
-        stream: Some(true),
-        instructions: None,
-        metadata: None,
-        previous_response_id: None,
-        tools: None,
-    };
+    let request = CreateResponseRequest::builder()
+        .model("gpt-5-nano")
+        .input("人为什么而活")
+        .stream(true)
+        .build()
+        .expect("Failed to build request");
 
     println!("🚀 正在发送流式请求到 Responses API...\n");
     println!("模型: {}", request.model);

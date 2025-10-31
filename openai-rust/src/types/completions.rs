@@ -352,6 +352,311 @@ pub struct CompletionRequest {
     pub service_tier: Option<ServiceTier>,
 }
 
+impl CompletionRequest {
+    /// Create a builder for constructing a request
+    pub fn builder() -> CompletionRequestBuilder {
+        CompletionRequestBuilder::new()
+    }
+}
+
+/// Builder for CompletionRequest
+#[derive(Debug, Clone, Default)]
+pub struct CompletionRequestBuilder {
+    model: Option<String>,
+    messages: Vec<RequestMessage>,
+    modalities: Option<Vec<ResponseModality>>,
+    verbosity: Option<Verbosity>,
+    reasoning_effort: Option<ReasoningEffort>,
+    max_completion_tokens: Option<u32>,
+    frequency_penalty: Option<f32>,
+    presence_penalty: Option<f32>,
+    web_search_options: Option<WebSearchOptions>,
+    top_logprobs: Option<u32>,
+    response_format: Option<Value>,
+    audio: Option<AudioOptions>,
+    store: Option<bool>,
+    stream: Option<bool>,
+    stop: Option<StopConfig>,
+    logit_bias: Option<HashMap<String, i32>>,
+    logprobs: Option<bool>,
+    max_tokens: Option<u32>,
+    n: Option<u32>,
+    prediction: Option<Value>,
+    seed: Option<i64>,
+    stream_options: Option<StreamOptions>,
+    tools: Option<Vec<Tool>>,
+    tool_choice: Option<ToolChoice>,
+    parallel_tool_calls: Option<bool>,
+    function_call: Option<Value>,
+    functions: Option<Vec<Function>>,
+    metadata: Option<HashMap<String, String>>,
+    temperature: Option<f32>,
+    top_p: Option<f32>,
+    user: Option<String>,
+    safety_identifier: Option<String>,
+    prompt_cache_key: Option<String>,
+    service_tier: Option<ServiceTier>,
+}
+
+impl CompletionRequestBuilder {
+    /// Create a new builder
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the model ID (required)
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.model = Some(model.into());
+        self
+    }
+
+    /// Set the messages (required)
+    pub fn messages(mut self, messages: Vec<RequestMessage>) -> Self {
+        self.messages = messages;
+        self
+    }
+
+    /// Add a single message
+    pub fn add_message(mut self, message: RequestMessage) -> Self {
+        self.messages.push(message);
+        self
+    }
+
+    /// Set temperature (0.0 to 2.0)
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.temperature = Some(temperature);
+        self
+    }
+
+    /// Enable or disable streaming
+    pub fn stream(mut self, stream: bool) -> Self {
+        self.stream = Some(stream);
+        self
+    }
+
+    /// Set tools available to the model
+    pub fn tools(mut self, tools: Vec<Tool>) -> Self {
+        self.tools = Some(tools);
+        self
+    }
+
+    /// Set tool choice strategy
+    pub fn tool_choice(mut self, tool_choice: ToolChoice) -> Self {
+        self.tool_choice = Some(tool_choice);
+        self
+    }
+
+    /// Enable or disable parallel tool calls
+    pub fn parallel_tool_calls(mut self, enabled: bool) -> Self {
+        self.parallel_tool_calls = Some(enabled);
+        self
+    }
+
+    /// Set maximum completion tokens
+    pub fn max_completion_tokens(mut self, max_tokens: u32) -> Self {
+        self.max_completion_tokens = Some(max_tokens);
+        self
+    }
+
+    /// Set reasoning effort level
+    pub fn reasoning_effort(mut self, effort: ReasoningEffort) -> Self {
+        self.reasoning_effort = Some(effort);
+        self
+    }
+
+    /// Set verbosity level
+    pub fn verbosity(mut self, verbosity: Verbosity) -> Self {
+        self.verbosity = Some(verbosity);
+        self
+    }
+
+    /// Set top_p for nucleus sampling
+    pub fn top_p(mut self, top_p: f32) -> Self {
+        self.top_p = Some(top_p);
+        self
+    }
+
+    /// Set service tier
+    pub fn service_tier(mut self, tier: ServiceTier) -> Self {
+        self.service_tier = Some(tier);
+        self
+    }
+
+    /// Set modalities
+    pub fn modalities(mut self, modalities: Vec<ResponseModality>) -> Self {
+        self.modalities = Some(modalities);
+        self
+    }
+
+    /// Set frequency penalty
+    pub fn frequency_penalty(mut self, penalty: f32) -> Self {
+        self.frequency_penalty = Some(penalty);
+        self
+    }
+
+    /// Set presence penalty
+    pub fn presence_penalty(mut self, penalty: f32) -> Self {
+        self.presence_penalty = Some(penalty);
+        self
+    }
+
+    /// Set web search options
+    pub fn web_search_options(mut self, options: WebSearchOptions) -> Self {
+        self.web_search_options = Some(options);
+        self
+    }
+
+    /// Set top logprobs
+    pub fn top_logprobs(mut self, top_logprobs: u32) -> Self {
+        self.top_logprobs = Some(top_logprobs);
+        self
+    }
+
+    /// Set response format
+    pub fn response_format(mut self, format: Value) -> Self {
+        self.response_format = Some(format);
+        self
+    }
+
+    /// Set audio options
+    pub fn audio(mut self, audio: AudioOptions) -> Self {
+        self.audio = Some(audio);
+        self
+    }
+
+    /// Set whether to store the completion
+    pub fn store(mut self, store: bool) -> Self {
+        self.store = Some(store);
+        self
+    }
+
+    /// Set stop sequences
+    pub fn stop(mut self, stop: StopConfig) -> Self {
+        self.stop = Some(stop);
+        self
+    }
+
+    /// Set logit bias
+    pub fn logit_bias(mut self, bias: HashMap<String, i32>) -> Self {
+        self.logit_bias = Some(bias);
+        self
+    }
+
+    /// Enable or disable logprobs
+    pub fn logprobs(mut self, enabled: bool) -> Self {
+        self.logprobs = Some(enabled);
+        self
+    }
+
+    /// Set maximum tokens
+    pub fn max_tokens(mut self, max_tokens: u32) -> Self {
+        self.max_tokens = Some(max_tokens);
+        self
+    }
+
+    /// Set number of completions to generate
+    pub fn n(mut self, n: u32) -> Self {
+        self.n = Some(n);
+        self
+    }
+
+    /// Set prediction configuration
+    pub fn prediction(mut self, prediction: Value) -> Self {
+        self.prediction = Some(prediction);
+        self
+    }
+
+    /// Set seed for deterministic output
+    pub fn seed(mut self, seed: i64) -> Self {
+        self.seed = Some(seed);
+        self
+    }
+
+    /// Set stream options
+    pub fn stream_options(mut self, options: StreamOptions) -> Self {
+        self.stream_options = Some(options);
+        self
+    }
+
+    /// Set deprecated function_call
+    #[deprecated(note = "Use tool_choice instead")]
+    pub fn function_call(mut self, function_call: Value) -> Self {
+        self.function_call = Some(function_call);
+        self
+    }
+
+    /// Set deprecated functions
+    #[deprecated(note = "Use tools instead")]
+    pub fn functions(mut self, functions: Vec<Function>) -> Self {
+        self.functions = Some(functions);
+        self
+    }
+
+    /// Set metadata
+    pub fn metadata(mut self, metadata: HashMap<String, String>) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+
+    /// Set safety identifier
+    pub fn safety_identifier(mut self, identifier: impl Into<String>) -> Self {
+        self.safety_identifier = Some(identifier.into());
+        self
+    }
+
+    /// Set prompt cache key
+    pub fn prompt_cache_key(mut self, key: impl Into<String>) -> Self {
+        self.prompt_cache_key = Some(key.into());
+        self
+    }
+
+    /// Build the final request
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if required fields (model) are not set
+    pub fn build(self) -> Result<CompletionRequest, String> {
+        let model = self.model.ok_or("model is required")?;
+
+        Ok(CompletionRequest {
+            model,
+            messages: self.messages,
+            modalities: self.modalities,
+            verbosity: self.verbosity,
+            reasoning_effort: self.reasoning_effort,
+            max_completion_tokens: self.max_completion_tokens,
+            frequency_penalty: self.frequency_penalty,
+            presence_penalty: self.presence_penalty,
+            web_search_options: self.web_search_options,
+            top_logprobs: self.top_logprobs,
+            response_format: self.response_format,
+            audio: self.audio,
+            store: self.store,
+            stream: self.stream,
+            stop: self.stop,
+            logit_bias: self.logit_bias,
+            logprobs: self.logprobs,
+            max_tokens: self.max_tokens,
+            n: self.n,
+            prediction: self.prediction,
+            seed: self.seed,
+            stream_options: self.stream_options,
+            tools: self.tools,
+            tool_choice: self.tool_choice,
+            parallel_tool_calls: self.parallel_tool_calls,
+            function_call: self.function_call,
+            functions: self.functions,
+            metadata: self.metadata,
+            temperature: self.temperature,
+            top_p: self.top_p,
+            user: self.user,
+            safety_identifier: self.safety_identifier,
+            prompt_cache_key: self.prompt_cache_key,
+            service_tier: self.service_tier,
+        })
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tool {
     #[serde(rename = "type")]

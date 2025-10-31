@@ -79,15 +79,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         turn_count += 1;
         println!("\n=== Turn {} ===", turn_count);
 
-        let request = CompletionRequest {
-            model: "gpt-5-nano".to_string(),
-            messages: messages.clone(),
-            temperature: Some(0.7),
-            stream: None,
-            tools: Some(tools.clone()),
-            tool_choice: Some(ToolChoice::None("auto".to_string())),
-            parallel_tool_calls: Some(true),
-        };
+        let request = CompletionRequest::builder()
+            .model("gpt-5-nano")
+            .messages(messages.clone())
+            .temperature(0.7)
+            .tools(tools.clone())
+            .tool_choice(ToolChoice::None("auto".to_string()))
+            .parallel_tool_calls(true)
+            .build()
+            .expect("Failed to build request");
 
         println!("Sending request to AI...");
 

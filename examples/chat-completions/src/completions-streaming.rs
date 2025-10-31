@@ -23,15 +23,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         RequestMessage::new(Role::User, "人生的意义是什么?".to_string()),
     ];
 
-    let request = CompletionRequest {
-        model: "deepseek/deepseek-r1-0528:free".to_string(),
-        messages,
-        temperature: Some(0.7),
-        stream: Some(true),
-        tools: None,
-        tool_choice: None,
-        parallel_tool_calls: None,
-    };
+    let request = CompletionRequest::builder()
+        .model("deepseek/deepseek-r1-0528:free")
+        .messages(messages)
+        .temperature(0.7)
+        .stream(true)
+        .build()
+        .expect("Failed to build request");
 
     println!("正在发送流式请求....");
 

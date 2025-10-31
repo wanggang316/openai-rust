@@ -96,15 +96,16 @@ async fn process_with_tools(
     ];
 
     // 第一次请求 - 获取工具调用
-    let request = CompletionRequest {
-        model: env::var("MODEL").unwrap_or_else(|_| "gpt-4".to_string()),
-        messages: messages.clone(),
-        temperature: Some(0.7),
-        stream: Some(true),
-        tools: Some(tools.to_vec()),
-        tool_choice: Some(ToolChoice::None("auto".to_string())),
-        parallel_tool_calls: Some(true),
-    };
+    let request = CompletionRequest::builder()
+        .model(env::var("MODEL").unwrap_or_else(|_| "gpt-4".to_string()))
+        .messages(messages.clone())
+        .temperature(0.7)
+        .stream(true)
+        .tools(tools.to_vec())
+        .tool_choice(ToolChoice::None("auto".to_string()))
+        .parallel_tool_calls(true)
+        .build()
+        .expect("Failed to build request");
 
     println!("=== Step 1: Initial AI Request (Streaming) ===");
     let tool_calls = stream_and_get_tool_calls(client, &request).await?;
@@ -142,15 +143,13 @@ async fn process_with_tools(
 
     println!("=== Step 3: Follow-up AI Request ===");
     // 第二次请求 - 基于工具结果生成最终回复
-    let follow_up_request = CompletionRequest {
-        model: env::var("MODEL").unwrap_or_else(|_| "gpt-4".to_string()),
-        messages,
-        temperature: Some(0.7),
-        stream: Some(true),
-        tools: None,
-        tool_choice: None,
-        parallel_tool_calls: None,
-    };
+    let follow_up_request = CompletionRequest::builder()
+        .model(env::var("MODEL").unwrap_or_else(|_| "gpt-4".to_string()))
+        .messages(messages)
+        .temperature(0.7)
+        .stream(true)
+        .build()
+        .expect("Failed to build request");
 
     let final_response = stream_and_get_content(client, &follow_up_request).await?;
     Ok(final_response)

@@ -21,15 +21,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         RequestMessage::new(Role::User, "今天星期几？".to_string()),
     ];
 
-    let request = CompletionRequest {
-        model: "deepseek-reasoner".to_string(),
-        messages,
-        temperature: Some(0.7),
-        stream: None,
-        tools: None,
-        tool_choice: None,
-        parallel_tool_calls: None,
-    };
+    let request = CompletionRequest::builder()
+        .model("deepseek-reasoner")
+        .messages(messages)
+        .temperature(0.7)
+        .build()
+        .expect("Failed to build request");
 
     println!("正在发送请求....");
 

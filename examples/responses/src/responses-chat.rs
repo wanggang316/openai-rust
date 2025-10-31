@@ -1,5 +1,5 @@
 use openai_rust::client::Client;
-use openai_rust::types::{CreateResponseRequest, ResponseInput};
+use openai_rust::types::CreateResponseRequest;
 use std::env;
 
 #[tokio::main]
@@ -16,16 +16,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .base_url(base_url)
         .build()?;
 
-    // Simple text input - just pass a string
-    let request = CreateResponseRequest {
-        model: "gpt-5-nano".to_string(),
-        input: ResponseInput::Text("人生的意义是什么？".to_string()),
-        instructions: Some("你是一个哲学助手，请深入思考问题。".to_string()),
-        metadata: None,
-        previous_response_id: None,
-        tools: None,
-        stream: Some(false),
-    };
+    // Use builder pattern to construct request
+    let request = CreateResponseRequest::builder()
+        .model("gpt-5-nano")
+        .input("人生的意义是什么？")
+        .instructions("你是一个哲学助手，请深入思考问题。")
+        .stream(false)
+        .build()
+        .expect("Failed to build request");
 
     println!("正在发送 Response API 请求....");
 
