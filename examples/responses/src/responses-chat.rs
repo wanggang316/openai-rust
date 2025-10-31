@@ -44,18 +44,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Process output items
             println!("\n--- 输出内容 ---");
             for item in &response.output {
-                println!("Item ID: {}", item.id);
-                println!("类型: {}", item.item_type);
-                if let Some(role) = &item.role {
+                println!("Item ID: {}", item.id());
+                println!("类型: {}", item.item_type());
+                if let Some(role) = item.role() {
                     println!("角色: {role}");
                 }
 
-                // Process content within each item
-                for content in &item.content {
-                    if content.content_type == "output_text" {
-                        if let Some(text) = &content.text {
-                            println!("\n文本内容:");
-                            println!("{text}");
+                // Process content within each item if it's a message
+                if let Some(content) = item.content() {
+                    for c in content {
+                        if c.content_type == "output_text" {
+                            if let Some(text) = &c.text {
+                                println!("\n文本内容:");
+                                println!("{text}");
+                            }
                         }
                     }
                 }

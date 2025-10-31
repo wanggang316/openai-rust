@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // 静默处理进度事件
                     }
                     ResponseStreamEvent::OutputItemAdded { item, .. } => {
-                        println!("➕ 输出项添加: 类型={}, ID={}", item.item_type, item.id);
+                        println!("➕ 输出项添加: 类型={}, ID={}", item.item_type(), item.id());
                     }
                     ResponseStreamEvent::ContentPartAdded { .. } => {
                         // 静默处理内容部分添加
@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // 静默处理内容部分完成
                     }
                     ResponseStreamEvent::OutputItemDone { item, .. } => {
-                        println!("✔️  输出项完成: {}", item.id);
+                        println!("✔️  输出项完成: {}", item.id());
                     }
                     ResponseStreamEvent::ResponseCompleted { response, .. } => {
                         println!("\n\n");

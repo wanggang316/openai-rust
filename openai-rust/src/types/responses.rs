@@ -503,22 +503,240 @@ pub struct ResponseError {
 /// Alias for backward compatibility
 pub type ErrorDetails = ResponseError;
 
-/// Output item in the response
+/// Output item in the response - can be various types
 #[derive(Debug, Deserialize, Clone)]
-pub struct OutputItem {
-    /// Item ID
-    pub id: String,
-    /// Type of output item
+#[serde(tag = "type")]
+pub enum OutputItem {
+    /// Output message from the model
+    #[serde(rename = "message")]
+    Message {
+        id: String,
+        role: String,
+        #[serde(default)]
+        content: Vec<OutputContent>,
+        #[serde(default)]
+        status: String,
+    },
+    /// Function tool call
+    #[serde(rename = "function_call")]
+    FunctionCall {
+        id: String,
+        call_id: String,
+        name: String,
+        arguments: String,
+        #[serde(default)]
+        status: String,
+    },
+    /// File search tool call
+    #[serde(rename = "file_search")]
+    FileSearch {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        results: Option<Vec<serde_json::Value>>,
+    },
+    /// Web search tool call
+    #[serde(rename = "web_search")]
+    WebSearch {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        query: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        results: Option<Vec<serde_json::Value>>,
+    },
+    /// Reasoning item
+    #[serde(rename = "reasoning")]
+    Reasoning {
+        id: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        encrypted_content: Option<String>,
+        #[serde(default)]
+        summary: Vec<ReasoningSummaryPart>,
+        #[serde(default)]
+        content: Vec<ReasoningContentPart>,
+        #[serde(default)]
+        status: String,
+    },
+    /// Code interpreter tool call
+    #[serde(rename = "code_interpreter")]
+    CodeInterpreter {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        input: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        outputs: Option<Vec<serde_json::Value>>,
+    },
+    /// Computer use tool call
+    #[serde(rename = "computer_use")]
+    ComputerUse {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+    /// Image generation tool call
+    #[serde(rename = "image_gen")]
+    ImageGen {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+    /// Local shell tool call
+    #[serde(rename = "local_shell")]
+    LocalShell {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+    /// MCP tool call
+    #[serde(rename = "mcp")]
+    MCPToolCall {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+    /// MCP list tools
+    #[serde(rename = "mcp_list_tools")]
+    MCPListTools {
+        id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+    /// MCP approval request
+    #[serde(rename = "mcp_approval_request")]
+    MCPApprovalRequest {
+        id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+    /// Custom tool call
+    #[serde(rename = "custom")]
+    Custom {
+        id: String,
+        call_id: String,
+        #[serde(default)]
+        status: String,
+        #[serde(flatten)]
+        data: serde_json::Value,
+    },
+}
+
+/// Reasoning summary part
+#[derive(Debug, Deserialize, Clone)]
+pub struct ReasoningSummaryPart {
+    /// Type is always "summary_text"
     #[serde(rename = "type")]
-    pub item_type: String,
-    /// Status of the item
-    #[serde(default)]
-    pub status: String,
-    /// Content array for message items
-    #[serde(default)]
-    pub content: Vec<OutputContent>,
-    /// Role for message items
-    pub role: Option<String>,
+    pub part_type: String,
+    /// Summary text
+    pub text: String,
+}
+
+/// Reasoning content part
+#[derive(Debug, Deserialize, Clone)]
+pub struct ReasoningContentPart {
+    /// Type is always "reasoning_text"
+    #[serde(rename = "type")]
+    pub part_type: String,
+    /// Reasoning text
+    pub text: String,
+}
+
+impl OutputItem {
+    /// Get the ID of the output item
+    pub fn id(&self) -> &str {
+        match self {
+            OutputItem::Message { id, .. }
+            | OutputItem::FunctionCall { id, .. }
+            | OutputItem::FileSearch { id, .. }
+            | OutputItem::WebSearch { id, .. }
+            | OutputItem::Reasoning { id, .. }
+            | OutputItem::CodeInterpreter { id, .. }
+            | OutputItem::ComputerUse { id, .. }
+            | OutputItem::ImageGen { id, .. }
+            | OutputItem::LocalShell { id, .. }
+            | OutputItem::MCPToolCall { id, .. }
+            | OutputItem::MCPListTools { id, .. }
+            | OutputItem::MCPApprovalRequest { id, .. }
+            | OutputItem::Custom { id, .. } => id,
+        }
+    }
+
+    /// Get the type of the output item as a string
+    pub fn item_type(&self) -> &str {
+        match self {
+            OutputItem::Message { .. } => "message",
+            OutputItem::FunctionCall { .. } => "function_call",
+            OutputItem::FileSearch { .. } => "file_search",
+            OutputItem::WebSearch { .. } => "web_search",
+            OutputItem::Reasoning { .. } => "reasoning",
+            OutputItem::CodeInterpreter { .. } => "code_interpreter",
+            OutputItem::ComputerUse { .. } => "computer_use",
+            OutputItem::ImageGen { .. } => "image_gen",
+            OutputItem::LocalShell { .. } => "local_shell",
+            OutputItem::MCPToolCall { .. } => "mcp",
+            OutputItem::MCPListTools { .. } => "mcp_list_tools",
+            OutputItem::MCPApprovalRequest { .. } => "mcp_approval_request",
+            OutputItem::Custom { .. } => "custom",
+        }
+    }
+
+    /// Get the status of the output item
+    pub fn status(&self) -> &str {
+        match self {
+            OutputItem::Message { status, .. }
+            | OutputItem::FunctionCall { status, .. }
+            | OutputItem::FileSearch { status, .. }
+            | OutputItem::WebSearch { status, .. }
+            | OutputItem::Reasoning { status, .. }
+            | OutputItem::CodeInterpreter { status, .. }
+            | OutputItem::ComputerUse { status, .. }
+            | OutputItem::ImageGen { status, .. }
+            | OutputItem::LocalShell { status, .. }
+            | OutputItem::MCPToolCall { status, .. }
+            | OutputItem::MCPListTools { status, .. }
+            | OutputItem::MCPApprovalRequest { status, .. }
+            | OutputItem::Custom { status, .. } => status,
+        }
+    }
+
+    /// Get the role if this is a message
+    pub fn role(&self) -> Option<&str> {
+        match self {
+            OutputItem::Message { role, .. } => Some(role),
+            _ => None,
+        }
+    }
+
+    /// Get the content if this is a message
+    pub fn content(&self) -> Option<&[OutputContent]> {
+        match self {
+            OutputItem::Message { content, .. } => Some(content),
+            _ => None,
+        }
+    }
 }
 
 /// Output content
