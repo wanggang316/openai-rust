@@ -1324,6 +1324,70 @@ pub enum ResponseStreamEvent {
         output_index: u32,
         item: OutputItem,
     },
+    #[serde(rename = "response.reasoning_summary_part.added")]
+    ReasoningSummaryPartAdded {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        summary_index: u32,
+        part: ReasoningSummaryPart,
+    },
+    #[serde(rename = "response.reasoning_summary_part.done")]
+    ReasoningSummaryPartDone {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        summary_index: u32,
+        part: ReasoningSummaryPart,
+    },
+    #[serde(rename = "response.reasoning_summary_text.delta")]
+    ReasoningSummaryTextDelta {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        summary_index: u32,
+        delta: String,
+    },
+    #[serde(rename = "response.reasoning_summary_text.done")]
+    ReasoningSummaryTextDone {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        summary_index: u32,
+        text: String,
+    },
+    #[serde(rename = "response.reasoning_text.delta")]
+    ReasoningTextDelta {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        content_index: u32,
+        delta: String,
+    },
+    #[serde(rename = "response.reasoning_text.done")]
+    ReasoningTextDone {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        content_index: u32,
+        text: String,
+    },
+    #[serde(rename = "response.refusal.delta")]
+    RefusalDelta {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        content_index: u32,
+        delta: String,
+    },
+    #[serde(rename = "response.refusal.done")]
+    RefusalDone {
+        sequence_number: u32,
+        item_id: String,
+        output_index: u32,
+        content_index: u32,
+        refusal: String,
+    },
     #[serde(rename = "response.completed")]
     ResponseCompleted {
         sequence_number: u32,

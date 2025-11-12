@@ -71,6 +71,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ResponseStreamEvent::ContentPartDone { .. } => {
                         // 静默处理内容部分完成
                     }
+                    ResponseStreamEvent::ReasoningSummaryPartAdded { .. }
+                    | ResponseStreamEvent::ReasoningSummaryPartDone { .. }
+                    | ResponseStreamEvent::ReasoningSummaryTextDelta { .. }
+                    | ResponseStreamEvent::ReasoningSummaryTextDone { .. }
+                    | ResponseStreamEvent::ReasoningTextDelta { .. }
+                    | ResponseStreamEvent::ReasoningTextDone { .. }
+                    | ResponseStreamEvent::RefusalDelta { .. }
+                    | ResponseStreamEvent::RefusalDone { .. } => {
+                        // 这些事件目前不展示，保留以保持模式匹配完整
+                    }
                     ResponseStreamEvent::OutputItemDone { item, .. } => {
                         println!("✔️  输出项完成: {}", item.id());
                     }
