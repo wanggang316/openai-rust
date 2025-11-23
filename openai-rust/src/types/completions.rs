@@ -14,46 +14,104 @@ pub enum Role {
     Tool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum Content {
+    Text(String),
+    Array(Vec<ContentPart>),
+}
+
+impl Default for Content {
+    fn default() -> Self {
+        Content::Text(String::new())
+    }
+}
+
+impl From<String> for Content {
+    fn from(s: String) -> Self {
+        Content::Text(s)
+    }
+}
+
+impl From<&str> for Content {
+    fn from(s: &str) -> Self {
+        Content::Text(s.to_string())
+    }
+}
+
+impl From<Vec<ContentPart>> for Content {
+    fn from(parts: Vec<ContentPart>) -> Self {
+        Content::Array(parts)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(tag = "type")]
+pub enum ContentPart {
+    #[serde(rename = "text")]
+    Text { text: String },
+    #[serde(rename = "image_url")]
+    ImageUrl { image_url: ImageUrl },
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ImageUrl {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct RequestMessage {
     #[serde(default)]
     pub role: Role,
     #[serde(default)]
-    pub content: String,
+    pub content: Content,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub tool_calls: Option<Vec<ToolCall>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub tool_call_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub name: Option<String>,
 }
 
 impl RequestMessage {
-    pub fn new(role: Role, content: String) -> Self {
+    pub fn new(role: Role, content: impl Into<Content>) -> Self {
         Self {
             role,
-            content,
+            content: content.into(),
             tool_calls: None,
             tool_call_id: None,
+            name: None,
         }
     }
 
-    pub fn tool_response(content: String, tool_call_id: String) -> Self {
+    pub fn tool_response(content: impl Into<Content>, tool_call_id: String) -> Self {
         Self {
             role: Role::Tool,
-            content,
+            content: content.into(),
             tool_calls: None,
             tool_call_id: Some(tool_call_id),
+            name: None,
         }
     }
 
-    pub fn assistant_with_tools(content: String, tool_calls: Vec<ToolCall>) -> Self {
+    pub fn assistant_with_tools(content: impl Into<Content>, tool_calls: Vec<ToolCall>) -> Self {
         Self {
             role: Role::Assistant,
-            content,
+            content: content.into(),
             tool_calls: Some(tool_calls),
             tool_call_id: None,
+            name: None,
         }
+    }
+
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = Some(name);
+        self
     }
 }
 
@@ -710,7 +768,7 @@ pub struct ToolChoiceFunction {
 pub struct ResponseMessage {
     pub role: Role,
     #[serde(default)]
-    pub content: Option<String>,
+    pub content: Option<Content>,
     #[serde(alias = "reasoning_content")]
     pub reasoning: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -760,7 +818,7 @@ pub struct ChunkChoice {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Delta {
     pub role: Option<Role>,
-    pub content: Option<String>,
+    pub content: Option<Content>,
     #[serde(alias = "reasoning_content")]
     pub reasoning: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]

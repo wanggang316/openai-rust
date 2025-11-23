@@ -17,8 +17,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     let messages = vec![
-        RequestMessage::new(Role::System, "You are a helpful assistant.".to_string()),
-        RequestMessage::new(Role::User, "今天星期几？".to_string()),
+        RequestMessage::new(Role::System, "You are a helpful assistant."),
+        RequestMessage::new(Role::User, "今天星期几？"),
     ];
 
     let request = CompletionRequest::builder()
