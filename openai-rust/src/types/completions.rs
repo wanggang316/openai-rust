@@ -350,6 +350,10 @@ pub struct CompletionRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub service_tier: Option<ServiceTier>,
+    /// 附加的自定义参数，会被直接合并进顶层请求。
+    #[serde(flatten)]
+    #[serde(default)]
+    pub extra_params: HashMap<String, Value>,
 }
 
 impl CompletionRequest {
@@ -396,6 +400,7 @@ pub struct CompletionRequestBuilder {
     safety_identifier: Option<String>,
     prompt_cache_key: Option<String>,
     service_tier: Option<ServiceTier>,
+    extra_params: HashMap<String, Value>,
 }
 
 impl CompletionRequestBuilder {
@@ -610,6 +615,18 @@ impl CompletionRequestBuilder {
         self
     }
 
+    /// Replace the entire extra params map
+    pub fn extra_params(mut self, params: HashMap<String, Value>) -> Self {
+        self.extra_params = params;
+        self
+    }
+
+    /// Insert or override a single extra param
+    pub fn insert_extra_param(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.extra_params.insert(key.into(), value);
+        self
+    }
+
     /// Build the final request
     ///
     /// # Errors
@@ -653,6 +670,7 @@ impl CompletionRequestBuilder {
             safety_identifier: self.safety_identifier,
             prompt_cache_key: self.prompt_cache_key,
             service_tier: self.service_tier,
+            extra_params: self.extra_params,
         })
     }
 }
