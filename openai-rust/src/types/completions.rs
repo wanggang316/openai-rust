@@ -1,6 +1,6 @@
 use core::str;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -764,15 +764,85 @@ pub struct ToolChoiceFunction {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize)]
+fn deserialize_images<'de, D>(deserializer: D) -> Result<Option<Vec<ContentPart>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum ImagesField {
+        Many(Vec<ContentPart>),
+        Single(ContentPart),
+    }
+
+    let images = Option::<ImagesField>::deserialize(deserializer)?;
+
+    Ok(match images {
+        Some(ImagesField::Many(parts)) => Some(parts),
+        Some(ImagesField::Single(part)) => Some(vec![part]),
+        None => None,
+    })
+}
+
+fn merge_content_and_images(
+    content: Option<Content>,
+    images: Option<Vec<ContentPart>>,
+) -> Option<Content> {
+    match (content, images) {
+        (None, None) => None,
+        (Some(content), None) => Some(content),
+        (None, Some(images)) => Some(Content::Array(images)),
+        (Some(Content::Text(text)), Some(mut images)) => {
+            let mut parts = Vec::with_capacity(images.len() + if text.is_empty() { 0 } else { 1 });
+            if !text.is_empty() {
+                parts.push(ContentPart::Text { text });
+            }
+            parts.append(&mut images);
+            Some(Content::Array(parts))
+        }
+        (Some(Content::Array(mut parts)), Some(mut images)) => {
+            parts.append(&mut images);
+            Some(Content::Array(parts))
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct ResponseMessage {
     pub role: Role,
-    #[serde(default)]
     pub content: Option<Content>,
-    #[serde(alias = "reasoning_content")]
     pub reasoning: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_calls: Option<Vec<ToolCall>>,
+}
+
+impl<'de> Deserialize<'de> for ResponseMessage {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct RawMessage {
+            role: Role,
+            #[serde(default)]
+            content: Option<Content>,
+            #[serde(default, alias = "reasoning_content")]
+            reasoning: Option<String>,
+            #[serde(default)]
+            tool_calls: Option<Vec<ToolCall>>,
+            #[serde(default, alias = "images", deserialize_with = "deserialize_images")]
+            images: Option<Vec<ContentPart>>,
+        }
+
+        let raw = RawMessage::deserialize(deserializer)?;
+        let content = merge_content_and_images(raw.content, raw.images);
+
+        Ok(ResponseMessage {
+            role: raw.role,
+            content,
+            reasoning: raw.reasoning,
+            tool_calls: raw.tool_calls,
+        })
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -815,14 +885,43 @@ pub struct ChunkChoice {
     pub finish_reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct Delta {
     pub role: Option<Role>,
     pub content: Option<Content>,
-    #[serde(alias = "reasoning_content")]
     pub reasoning: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_calls: Option<Vec<DeltaToolCall>>,
+}
+
+impl<'de> Deserialize<'de> for Delta {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct RawDelta {
+            #[serde(default)]
+            role: Option<Role>,
+            #[serde(default)]
+            content: Option<Content>,
+            #[serde(default, alias = "reasoning_content")]
+            reasoning: Option<String>,
+            #[serde(default)]
+            tool_calls: Option<Vec<DeltaToolCall>>,
+            #[serde(default, alias = "images", deserialize_with = "deserialize_images")]
+            images: Option<Vec<ContentPart>>,
+        }
+
+        let raw = RawDelta::deserialize(deserializer)?;
+        let content = merge_content_and_images(raw.content, raw.images);
+
+        Ok(Delta {
+            role: raw.role,
+            content,
+            reasoning: raw.reasoning,
+            tool_calls: raw.tool_calls,
+        })
+    }
 }
 
 #[derive(Debug, Deserialize, Clone)]
