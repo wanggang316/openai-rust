@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-openai-rust = { git = "https://github.com/wanggang316/openai-rust", branch = "master" }
+openai-rust = { git = "https://github.com/wanggang316/openai-rust", tag = "v0.1.0" }
 ```
 
 ## Quick Start
