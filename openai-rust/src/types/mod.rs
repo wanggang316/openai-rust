@@ -6,10 +6,10 @@ mod responses;
 pub use completions::{
     AudioFormat, AudioOptions, Choice, ChunkChoice, CompletionChunkResponse, CompletionRequest,
     CompletionResponse, Content, ContentPart, Delta, DeltaFunction, DeltaToolCall, Function,
-    FunctionCall, ImageUrl, ReasoningEffort, RequestMessage, ResponseMessage, ResponseModality,
-    Role, ServiceTier, StopConfig, StreamOptions, Tool, ToolCall, ToolChoice, ToolChoiceFunction,
-    Usage, Verbosity, WebSearchApproximateLocation, WebSearchContextSize, WebSearchLocationType,
-    WebSearchOptions, WebSearchUserLocation,
+    FunctionCall, ImageUrl, PromptTokensDetails, ReasoningEffort, RequestMessage, ResponseMessage,
+    ResponseModality, Role, ServiceTier, StopConfig, StreamOptions, Tool, ToolCall, ToolChoice,
+    ToolChoiceFunction, Usage, Verbosity, WebSearchApproximateLocation, WebSearchContextSize,
+    WebSearchLocationType, WebSearchOptions, WebSearchUserLocation,
 };
 
 // Re-export from models module
