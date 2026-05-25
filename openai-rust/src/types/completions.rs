@@ -852,11 +852,25 @@ pub struct Choice {
     pub finish_reason: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Usage {
     pub prompt_tokens: u32,
     pub completion_tokens: u32,
     pub total_tokens: u32,
+    /// Per-call breakdown of prompt tokens. Present on OpenAI and many
+    /// compatible providers (OpenRouter, DeepSeek, …) to report
+    /// cached-prompt accounting separately from billed input tokens.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prompt_tokens_details: Option<PromptTokensDetails>,
+}
+
+/// Sub-object of [`Usage`] carrying the cached-token breakdown.
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct PromptTokensDetails {
+    /// Tokens served from the provider's prompt cache. Required by
+    /// callers that compute cache-aware cost.
+    #[serde(default)]
+    pub cached_tokens: u32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -876,6 +890,13 @@ pub struct CompletionChunkResponse {
     pub created: u64,
     pub model: String,
     pub choices: Vec<ChunkChoice>,
+    /// Token-usage statistics. Only emitted by providers when the
+    /// caller sets `stream_options.include_usage = true`, and even
+    /// then only on the terminal chunk of a stream. Optional so that
+    /// providers/proxies that never send it (or chunks that aren't
+    /// the terminal one) deserialize cleanly.
+    #[serde(default)]
+    pub usage: Option<Usage>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -937,4 +958,88 @@ pub struct DeltaToolCall {
 pub struct DeltaFunction {
     pub name: Option<String>,
     pub arguments: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The vast majority of streaming chunks carry no usage object.
+    /// They must continue to deserialize cleanly — the field is
+    /// `Option<Usage>` with `#[serde(default)]`, so a missing key is
+    /// not an error.
+    #[test]
+    fn chunk_without_usage_deserializes_as_none() {
+        let json = r#"{
+            "id": "chatcmpl-1",
+            "object": "chat.completion.chunk",
+            "created": 1700000000,
+            "model": "gpt-4o-mini",
+            "choices": [
+                {"index": 0, "delta": {"content": "hi"}, "finish_reason": null}
+            ]
+        }"#;
+        let chunk: CompletionChunkResponse =
+            serde_json::from_str(json).expect("chunk without usage must parse");
+        assert!(chunk.usage.is_none());
+    }
+
+    /// The terminal chunk of an OpenAI stream (when the caller set
+    /// `stream_options.include_usage = true`) carries the call's
+    /// token counts. Caller code can then write them back to its own
+    /// usage tracker and compute cost — regression target for
+    /// downstream issue: `--mode json` reporting zero usage because
+    /// the chunk's usage was silently dropped on deserialize.
+    #[test]
+    fn terminal_chunk_exposes_usage_to_caller() {
+        let json = r#"{
+            "id": "chatcmpl-1",
+            "object": "chat.completion.chunk",
+            "created": 1700000000,
+            "model": "gpt-4o-mini",
+            "choices": [],
+            "usage": {
+                "prompt_tokens": 101,
+                "completion_tokens": 7,
+                "total_tokens": 108
+            }
+        }"#;
+        let chunk: CompletionChunkResponse =
+            serde_json::from_str(json).expect("terminal chunk must parse");
+        let usage = chunk.usage.expect("usage field must round-trip");
+        assert_eq!(usage.prompt_tokens, 101);
+        assert_eq!(usage.completion_tokens, 7);
+        assert_eq!(usage.total_tokens, 108);
+        // Providers that don't break out cached tokens leave the
+        // sub-object absent; that's fine — caller treats it as zero.
+        assert!(usage.prompt_tokens_details.is_none());
+    }
+
+    /// OpenAI / OpenRouter / DeepSeek also report cached-prompt
+    /// tokens via `prompt_tokens_details.cached_tokens`. Cost-aware
+    /// callers need this number to subtract cache hits from billed
+    /// input tokens, so the sub-object must round-trip too.
+    #[test]
+    fn terminal_chunk_exposes_cached_tokens_breakdown() {
+        let json = r#"{
+            "id": "chatcmpl-1",
+            "object": "chat.completion.chunk",
+            "created": 1700000000,
+            "model": "gpt-4o-mini",
+            "choices": [],
+            "usage": {
+                "prompt_tokens": 500,
+                "completion_tokens": 30,
+                "total_tokens": 530,
+                "prompt_tokens_details": {"cached_tokens": 384}
+            }
+        }"#;
+        let chunk: CompletionChunkResponse =
+            serde_json::from_str(json).expect("chunk with details must parse");
+        let usage = chunk.usage.expect("usage must round-trip");
+        let details = usage
+            .prompt_tokens_details
+            .expect("prompt_tokens_details must round-trip");
+        assert_eq!(details.cached_tokens, 384);
+    }
 }
